@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+uploaded_resumes/
+resume_logs.db
+resumes.db
+firebase-adminsdk.json
+check_jobs.py
