@@ -64,7 +64,7 @@ Firebase Admin UID
 
 1. Clone the Repos
 
-git clone https://github.com/YOUR_USERNAME/resume_backend.git
+git clone https://github.com/Siburajak98832/resume_backend_2.git
 cd resume_backend
 
 2. Setup Backend
