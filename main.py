@@ -103,10 +103,10 @@ Your output must include the following **four sections** in this **exact format*
 
 ---
 
-### 📌 Job Title  
+###  Job Title  
 State the job title being analyzed.
 
-### 📊 ATS Score  
+###  ATS Score  
 Return a numeric ATS Score (0 to 100), **formatted exactly like this**:  
 **ATS Score: <number>**
 
@@ -116,10 +116,10 @@ This score should reflect how well the resume matches the job description based 
 - Formatting & structure
 - Language/tone
 
-### ❌ Missing Skills  
+###  Missing Skills  
 List the most important skills that are **mentioned in the job description but missing in the resume**.
 
-### ✅ Suggestions to Improve Resume  
+###  Suggestions to Improve Resume  
 Give **clear and actionable suggestions** to improve the resume for better alignment with this job, such as:
 - Skills to add
 - Experience to rephrase
@@ -138,7 +138,7 @@ Do **NOT** include any JSON or code formatting — return plain text only.
 """
             response = model.generate_content(prompt)
             text = response.text.strip()
-            print("📩 Gemini Raw Response:")
+            print(" Gemini Raw Response:")
             print(text) 
             score = extract_ats_score(text)
 
@@ -162,20 +162,7 @@ async def get_active_jobs(db: AsyncSession = Depends(get_db)):
     now = datetime.datetime.utcnow()
     result = await db.execute(select(Job).where(Job.deadline > now))
     return result.scalars().all()
-# from sqlalchemy import delete
-# from datetime import datetime
 
-# @app.get("/jobs", response_model=list[JobOut])
-# async def get_active_jobs(db: AsyncSession = Depends(get_db)):
-#     now = datetime.datetime.utcnow()
-
-#     # 🔥 Step 1: Delete expired jobs
-#     await db.execute(delete(Job).where(Job.deadline < now))
-#     await db.commit()
-
-#     # ✅ Step 2: Return only active jobs
-#     result = await db.execute(select(Job).where(Job.deadline > now))
-#     return result.scalars().all()
 
 
 @app.get("/admin/jobs")
@@ -202,85 +189,11 @@ async def update_job(job_id: int, updated_job: JobCreate, db: AsyncSession = Dep
     await db.commit()
     return {"message": "Job updated"}
 
-# @app.put("/jobs/{job_id}")
-# async def update_job(
-#     job_id: int,
-#     job_update: JobCreate,
-#     created_by: str = Header(...),
-#     db: AsyncSession = Depends(get_db)
-# ):
-#     result = await db.execute(select(Job).where(Job.id == job_id, Job.created_by == created_by))
-#     existing_job = result.scalar_one_or_none()
-#     if not existing_job:
-#         raise HTTPException(status_code=404, detail="Job not found or access denied")
-
-#     for k, v in job_update.dict().items():
-#         setattr(existing_job, k, v)
-
-#     await db.commit()
-#     return {"message": "Job updated"}
 
 
 
-# ============ RESUME SCREENING ============
+# ============ RESUME SCREENING ============#
 
-# @app.post("/screen")
-# async def screen_resume(
-#     file: UploadFile = File(...),
-#     job_id: int = Form(...),
-#     db: AsyncSession = Depends(get_db)
-# ):
-#     try:
-#         with tempfile.NamedTemporaryFile(delete=False, suffix="." + file.filename.split('.')[-1]) as tmp:
-#             shutil.copyfileobj(file.file, tmp)
-#             tmp_path = tmp.name
-
-#         job = await db.get(Job, job_id)
-#         if not job:
-#             raise HTTPException(status_code=404, detail="Job not found")
-#         os.makedirs("uploaded_resumes", exist_ok=True)  # ✅ ensure folder exists
-
-#         # 🔥 Save the resume to uploaded_resumes
-#         file_ext = file.filename.split('.')[-1]
-#         safe_email = "unknown"  # will be updated after parsing
-#         temp_path = os.path.join("uploaded_resumes", f"{safe_email}.{file_ext}")
-
-#         with open(temp_path, "wb") as buffer:
-#             shutil.copyfileobj(file.file, buffer)
-#         result = await analyze_resume(
-#             file_path=tmp_path,
-#             job_title=job.title,
-#             job_description=job.description,
-#             job_id=job_id,
-#             required_skills=job.required_skills,
-#             thresholds={"junior": 0.45, "mid": 0.55, "senior": 0.6},
-#             db=db
-#         )
-
-#         email = result["email"]
-#         os.rename(temp_path, os.path.join("uploaded_resumes", f"{result['email']}.{file_ext}"))
-#         await db.execute(
-#             delete(ResumeLog).where(and_(ResumeLog.email == email, ResumeLog.job_id == job_id))
-#         )
-
-#         new_log = ResumeLog(
-#             name=result["name"],
-#             email=email,
-#             role=result["job_title"],
-#             experience_level=result["level"],
-#             final_score=result["final_score"],
-#             status=result["status"],
-#             timestamp=datetime.datetime.utcnow(),
-#             job_id=job_id
-#         )
-#         db.add(new_log)
-#         await db.commit()
-#         return result
-
-#     except Exception as e:
-#         import traceback
-#         traceback.print_exc()
-#         raise HTTPException(status_code=500, detail=f"Resume screening failed: {str(e)}")
 
 @app.post("/screen")
 async def screen_resume(
@@ -289,10 +202,10 @@ async def screen_resume(
     db: AsyncSession = Depends(get_db)
 ):
     try:
-        # ✅ Read the file once
+        #  Read the file once
         file_content = await file.read()
 
-        # ✅ Save to a temporary file for analysis
+        #  Save to a temporary file for analysis
         ext = file.filename.split('.')[-1]
         with tempfile.NamedTemporaryFile(delete=False, suffix=f".{ext}") as tmp:
             tmp.write(file_content)
@@ -302,7 +215,7 @@ async def screen_resume(
         if not job:
             raise HTTPException(status_code=404, detail="Job not found")
 
-        # ✅ Ensure upload folder exists
+        # Ensure upload folder exists
         os.makedirs("uploaded_resumes", exist_ok=True)
 
         # Run the analysis
@@ -316,13 +229,13 @@ async def screen_resume(
             db=db
         )
 
-        # ✅ Save resume file using actual email
+        #  Save resume file using actual email
         email = result["email"]
         resume_path = os.path.join("uploaded_resumes", f"{email}.{ext}")
         with open(resume_path, "wb") as f:
             f.write(file_content)
 
-        # ✅ Save to DB
+        #  Save to DB
         await db.execute(
             delete(ResumeLog).where(and_(ResumeLog.email == email, ResumeLog.job_id == job_id))
         )
@@ -377,36 +290,14 @@ async def get_admin_logs(created_by: str= Query(...), db: AsyncSession = Depends
     ]
 
 
-# ============ EMAIL ============
 
-# @app.post("/admin/config", response_model=AdminConfigOut)
-# async def create_or_update_config(config: AdminConfigCreate, db: AsyncSession = Depends(get_db)):
-#     existing = await db.get(AdminConfig, config.email)
-#     if existing:
-#         existing.smtp_host = config.smtp_host
-#         existing.smtp_port = config.smtp_port
-#         existing.smtp_username = config.smtp_username
-#         existing.smtp_password = config.smtp_password
-#     else:
-#         existing = AdminConfig(**config.dict())
-#         db.add(existing)
 
-#     await db.commit()
-#     return existing
-
-# @app.get("/admin/config/{email}", response_model=AdminConfigOut)
-# async def get_admin_config(email: str, db: AsyncSession = Depends(get_db)):
-#     config = await db.get(AdminConfig, email)
-#     if not config:
-#         raise HTTPException(status_code=404, detail="Admin config not found")
-#     return config
 
 
 
 @app.post("/send-email")
 async def send_email(req: EmailRequest, db: AsyncSession = Depends(get_db)):
-    # sender_email = os.getenv("SENDER_EMAIL")
-    # sender_password = os.getenv("SENDER_PASSWORD")
+   
     sender_email = req.sender_email
     sender_password = req.sender_password
     result = await db.execute(
@@ -459,66 +350,7 @@ HR Team
         return {"error": str(e)}
 
 
-# @app.post("/send-email")
-# async def send_email(req: EmailRequest, db: AsyncSession = Depends(get_db)):
-#     # ✅ 1. Fetch the resume log to get the job and created_by
-#     result = await db.execute(
-#         select(ResumeLog).where(
-#             ResumeLog.email == req.email,
-#             ResumeLog.job_id == req.job_id
-#         ).options(joinedload(ResumeLog.job))
-#     )
-#     log = result.scalars().first()
 
-#     if not log or not log.job:
-#         raise HTTPException(status_code=404, detail="Application or Job not found")
-
-#     # ✅ 2. Fetch admin config based on created_by
-#     created_by = log.job.created_by
-#     admin_config = await db.get(AdminConfig, created_by)
-#     if not admin_config:
-#         raise HTTPException(status_code=404, detail="Admin SMTP config not found")
-
-#     # ✅ 3. Compose email body
-#     company = log.job.company_name or "our company"
-#     if req.status.lower() == "accepted":
-#         body = f"""
-# Dear {req.name},
-
-# Thank you for applying to the {req.best_role} position at {company}.
-
-# You have been shortlisted for the next stage of our recruitment process. We’ll contact you soon!
-
-# Warm regards,  
-# HR Team  
-# """
-#     else:
-#         body = f"""
-# Dear {req.name},
-
-# Thank you for your interest in the {req.best_role} position at {company}.
-
-# We regret to inform you that we will not be moving forward with your application at this time.
-
-# We wish you all the best in your job search.
-
-# Sincerely,  
-# HR Team  
-# """
-
-#     # ✅ 4. Send email using admin's SMTP settings
-#     msg = MIMEText(body)
-#     msg["Subject"] = f"Application Status – {req.best_role} at {company}"
-#     msg["From"] = admin_config.smtp_username
-#     msg["To"] = req.email
-
-#     try:
-#         with smtplib.SMTP_SSL(admin_config.smtp_host, int(admin_config.smtp_port)) as server:
-#             server.login(admin_config.smtp_username, admin_config.smtp_password)
-#             server.sendmail(admin_config.smtp_username, req.email, msg.as_string())
-#         return {"message": "Email sent"}
-#     except Exception as e:
-#         return {"error": str(e)}
 
 
 # ============ RESUME FILE VIEW & DELETE ============
